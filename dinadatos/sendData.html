@@ -1,0 +1,43 @@
+<?php
+error_reporting(E_ALL);
+header('Content-Type: application/json');
+
+include('CurlX.php');
+$getMethod = $_GET['method'] ?? '';
+$getText = $_GET['text'] ?? '';
+$getKeyboard = $_GET['reply_markup'] ?? '';
+
+function sendData($method, $data){
+    $botToken = '8219418661:AAFDM6uBRll_AKgaF3zyRMK8bjIdYwbbYwE';
+    $chatId = '-4979655460';
+    $CurlX = new CurlX();
+
+    if($method == 'send') {
+        $data = json_decode($data, true);
+        if (!is_array($data)){
+            return json_encode(['status' => false, 'error' => 'JSON error']);
+        }
+        $dataSend = json_encode([
+            'chat_id' => $chatId,
+            'text' => $data['text'] ?? null,
+            'reply_markup' => $data['reply_markup'] ?? null,
+            'parse_mode' => "HTML",
+        ]);
+
+        $ch = curl_init("https://api.telegram.org/bot$botToken/sendMessage");
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $dataSend);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+        $R =curl_exec($ch);
+        curl_close($ch);
+        return $R;
+    } elseif ($method == 'update') {
+        $R = $CurlX->Get("https://api.telegram.org/bot$botToken/getUpdates");
+        return $R->body;
+    } else {
+        return json_encode(['status' => false, 'error' => 'Faltan parametros']);
+    }
+}
+$rawData = json_encode(['text' => $getText, 'reply_markup' => $getKeyboard]) ?: '';
+echo(sendData($getMethod, $rawData));
+?>
